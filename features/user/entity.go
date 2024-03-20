@@ -10,6 +10,8 @@ type UserController interface {
 	Login() echo.HandlerFunc
 	Profile() echo.HandlerFunc
 	DeleteUser() echo.HandlerFunc
+	GetUserByHP() echo.HandlerFunc
+	UpdateUser() echo.HandlerFunc
 }
 
 type UserService interface {
@@ -17,6 +19,8 @@ type UserService interface {
 	Login(loginData User) (User, string, error)
 	Profile(token *jwt.Token) (User, error)
 	DeleteUser(userID string) error
+	GetUserByHP(hp string) (User, error)
+	UpdateUser(hp string, newData User) error
 }
 
 type UserModel interface {

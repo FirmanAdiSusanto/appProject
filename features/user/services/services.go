@@ -100,3 +100,53 @@ func (s *service) DeleteUser(userID string) error {
 	}
 	return nil
 }
+
+// GetUserByHP digunakan untuk mendapatkan pengguna berdasarkan nomor HP
+func (s *service) GetUserByHP(hp string) (user.User, error) {
+	// Memanggil model untuk mendapatkan pengguna berdasarkan nomor HP
+	result, err := s.model.GetUserByHP(hp)
+	if err != nil {
+		return user.User{}, err
+	}
+
+	return result, nil
+}
+
+// UpdateUser digunakan untuk memperbarui pengguna berdasarkan nomor HP
+func (s *service) UpdateUser(hp string, newData user.User) error {
+	// Validasi data pengguna yang akan diperbarui
+	err := s.v.Struct(&newData)
+	if err != nil {
+		log.Println("error validasi", err.Error())
+		return err
+	}
+
+	// Periksa apakah pengguna yang ingin diperbarui berdasarkan nomor HP ada dalam database
+	existingUser, err := s.model.GetUserByHP(hp)
+	if err != nil {
+		return err // Pengguna tidak ditemukan, kembalikan kesalahan
+	}
+
+	// Periksa apakah ada perubahan pada kata sandi
+	if newData.Password != "" {
+		// Lakukan hashing pada kata sandi baru menggunakan PasswordManager
+		hashedPassword, err := s.pm.HashPassword(newData.Password)
+		if err != nil {
+			return err // Kembalikan kesalahan jika hashing gagal
+		}
+		// Gunakan kata sandi yang telah di-hash
+		existingUser.Password = hashedPassword
+	}
+
+	// Perbarui data pengguna dengan informasi baru
+	existingUser.Name = newData.Name
+	existingUser.Email = newData.Email
+
+	// Perbarui data pengguna di database
+	err = s.model.UpdateUser(hp, existingUser)
+	if err != nil {
+		return err // Kembalikan kesalahan jika gagal memperbarui pengguna di database
+	}
+
+	return nil
+}

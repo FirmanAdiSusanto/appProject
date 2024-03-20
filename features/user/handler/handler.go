@@ -20,31 +20,37 @@ func NewUserHandler(s user.UserService) user.UserController {
 	}
 }
 
-// func (ct *controller) RegisterUser() echo.HandlerFunc {
-// 	return func(c echo.Context) error {
-// 		var input user.User
-// 		err := c.Bind(&input)
-// 		if err != nil {
-// 			if strings.Contains(err.Error(), "unsupport") {
-// 				return c.JSON(http.StatusUnsupportedMediaType,
-// 					helper.ResponseFormat(http.StatusUnsupportedMediaType, "format data tidak didukung", nil))
-// 			}
-// 			return c.JSON(http.StatusBadRequest,
-// 				helper.ResponseFormat(http.StatusBadRequest, "data yang dikirmkan tidak sesuai", nil))
-// 		}
-// 		err = ct.service.Register(input)
-// 		if err != nil {
-// 			var code = http.StatusInternalServerError
-// 			if strings.Contains(err.Error(), "validation") {
-// 				code = http.StatusBadRequest
-// 			}
-// 			return c.JSON(code,
-// 				helper.ResponseFormat(code, err.Error(), nil))
-// 		}
-// 		return c.JSON(http.StatusCreated,
-// 			helper.ResponseFormat(http.StatusCreated, "Selamat resgistrasi berhasil", nil))
-// 	}
-// }
+// Register User
+func (ct *controller) RegisterUser() echo.HandlerFunc {
+	return func(c echo.Context) error {
+		// Bind data yang dikirimkan dalam request ke dalam struct User
+		var input user.User
+		if err := c.Bind(&input); err != nil {
+			// Jika terjadi kesalahan saat binding data, tanggapi dengan kode status yang sesuai
+			if strings.Contains(err.Error(), "unsupported") {
+				return c.JSON(http.StatusUnsupportedMediaType,
+					helper.ResponseFormat(http.StatusUnsupportedMediaType, "format data tidak didukung", nil))
+			}
+			return c.JSON(http.StatusBadRequest,
+				helper.ResponseFormat(http.StatusBadRequest, "data yang dikirimkan tidak sesuai", nil))
+		}
+
+		// Panggil fungsi RegisterUser dari service (services.go) untuk mendaftarkan pengguna
+		if err := ct.service.Register(input); err != nil {
+			// Jika terjadi kesalahan saat mendaftarkan pengguna, tanggapi dengan kode status yang sesuai
+			var code = http.StatusInternalServerError
+			if strings.Contains(err.Error(), "validation") {
+				code = http.StatusBadRequest
+			}
+			return c.JSON(code,
+				helper.ResponseFormat(code, err.Error(), nil))
+		}
+
+		// Tanggapi dengan status Created jika pendaftaran berhasil
+		return c.JSON(http.StatusCreated,
+			helper.ResponseFormat(http.StatusCreated, "Selamat registrasi berhasil", nil))
+	}
+}
 
 func (ct *controller) Login() echo.HandlerFunc {
 	return func(c echo.Context) error {
@@ -147,12 +153,39 @@ func (ct *controller) DeleteUser() echo.HandlerFunc {
 	}
 }
 
-// Register User
-func (ct *controller) RegisterUser() echo.HandlerFunc {
+// Get User By HP
+func (ct *controller) GetUserByHP() echo.HandlerFunc {
 	return func(c echo.Context) error {
+		// Mendapatkan nomor HP dari parameter URL
+		hp := c.Param("hp")
+
+		// Memanggil service untuk mendapatkan pengguna berdasarkan nomor HP
+		result, err := ct.service.GetUserByHP(hp)
+		if err != nil {
+			// Menangani kesalahan yang terjadi saat mendapatkan pengguna
+			var code = http.StatusInternalServerError
+			if strings.Contains(err.Error(), "not found") {
+				code = http.StatusNotFound
+			}
+			return c.JSON(code,
+				helper.ResponseFormat(code, err.Error(), nil))
+		}
+
+		// Mengembalikan respons JSON untuk berhasil mendapatkan pengguna berdasarkan nomor HP
+		return c.JSON(http.StatusOK,
+			helper.ResponseFormat(http.StatusOK, "berhasil mendapatkan pengguna", result))
+	}
+}
+
+// Update User
+func (ct *controller) UpdateUser() echo.HandlerFunc {
+	return func(c echo.Context) error {
+		// Mendapatkan nomor HP pengguna dari parameter URL
+		hp := c.Param("hp")
+
 		// Bind data yang dikirimkan dalam request ke dalam struct User
-		var input user.User
-		if err := c.Bind(&input); err != nil {
+		var newData user.User
+		if err := c.Bind(&newData); err != nil {
 			// Jika terjadi kesalahan saat binding data, tanggapi dengan kode status yang sesuai
 			if strings.Contains(err.Error(), "unsupported") {
 				return c.JSON(http.StatusUnsupportedMediaType,
@@ -162,19 +195,21 @@ func (ct *controller) RegisterUser() echo.HandlerFunc {
 				helper.ResponseFormat(http.StatusBadRequest, "data yang dikirimkan tidak sesuai", nil))
 		}
 
-		// Panggil fungsi RegisterUser dari service untuk mendaftarkan pengguna
-		if err := ct.service.Register(input); err != nil {
-			// Jika terjadi kesalahan saat mendaftarkan pengguna, tanggapi dengan kode status yang sesuai
+		// Panggil fungsi UpdateUser dari service (services.go) untuk memperbarui pengguna
+		if err := ct.service.UpdateUser(hp, newData); err != nil {
+			// Jika terjadi kesalahan saat memperbarui pengguna, tanggapi dengan kode status yang sesuai
 			var code = http.StatusInternalServerError
-			if strings.Contains(err.Error(), "validation") {
+			if strings.Contains(err.Error(), "not found") {
+				code = http.StatusNotFound
+			} else if strings.Contains(err.Error(), "validation") {
 				code = http.StatusBadRequest
 			}
 			return c.JSON(code,
 				helper.ResponseFormat(code, err.Error(), nil))
 		}
 
-		// Tanggapi dengan status Created jika pendaftaran berhasil
-		return c.JSON(http.StatusCreated,
-			helper.ResponseFormat(http.StatusCreated, "Selamat registrasi berhasil", nil))
+		// Tanggapi dengan status OK jika pembaruan berhasil
+		return c.JSON(http.StatusOK,
+			helper.ResponseFormat(http.StatusOK, "berhasil memperbarui pengguna", nil))
 	}
 }

@@ -21,6 +21,9 @@ func userRoute(c *echo.Echo, ctl user.UserController) {
 		SigningKey: []byte(config.JWTSECRET),
 	}))
 
+	//GetUserByHp
+	c.GET("/users/:hp", ctl.GetUserByHP())
+
 	//Register User
 	c.POST("/register", ctl.RegisterUser()) //Endpoint untuk API
 
@@ -28,6 +31,9 @@ func userRoute(c *echo.Echo, ctl user.UserController) {
 	c.DELETE("/users/:id", ctl.DeleteUser(), echojwt.WithConfig(echojwt.Config{
 		SigningKey: []byte(config.JWTSECRET),
 	}))
+
+	// UpdateUser
+	c.PUT("/users/:hp", ctl.UpdateUser())
 
 }
 
