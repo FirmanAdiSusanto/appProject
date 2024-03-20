@@ -25,10 +25,10 @@ func NewService(m user.UserModel) user.UserService {
 	}
 }
 
-// Fungsi digunakan untuk memproses registrasi pengguna baru dengan menerima data pengguna baru (nama, nomor HP, dan password) sebagai parameter input
+// Fungsi digunakan untuk memproses registrasi pengguna baru dengan menerima data pengguna baru
 func (s *service) Register(newData user.User) error {
 	var registerValidate user.Register
-	registerValidate.Nama = newData.Nama
+	registerValidate.Name = newData.Name
 	registerValidate.Email = newData.Email
 	registerValidate.Password = newData.Password
 	registerValidate.Hp = newData.Hp
@@ -38,7 +38,7 @@ func (s *service) Register(newData user.User) error {
 		return err
 	}
 
-	newPassword, err := s.pm.HashPassword(newData.Password)
+	newPassword, err := s.pm.HashPassword(newData.Password) //Menjadikan Password menjadi bentuk Hash
 	if err != nil {
 		return errors.New(helper.ServiceGeneralError)
 	}

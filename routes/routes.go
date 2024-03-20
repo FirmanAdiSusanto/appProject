@@ -22,9 +22,7 @@ func userRoute(c *echo.Echo, ctl user.UserController) {
 	}))
 
 	//Register User
-	c.POST("/register", ctl.RegisterUser(), echojwt.WithConfig(echojwt.Config{
-		SigningKey: []byte(config.JWTSECRET),
-	}))
+	c.POST("/register", ctl.RegisterUser()) //Endpoint untuk API
 
 	//DeleteUser
 	c.DELETE("/users/:id", ctl.DeleteUser(), echojwt.WithConfig(echojwt.Config{
