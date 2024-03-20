@@ -2,8 +2,8 @@ package data
 
 import (
 	"21-api/features/comment"
-	"errors"
 
+	"github.com/golang-jwt/jwt/v5"
 	"gorm.io/gorm"
 )
 
@@ -26,20 +26,6 @@ func (cm *model) InsertComment(PostID string, contentBaru comment.Comment) (comm
 	return comment.Comment{Content: inputProcess.Content}, nil
 }
 
-// Fungsi untuk Edit Comment
-func (cm *model) UpdateComment(postID string, commentID uint, data comment.Comment) (comment.Comment, error) {
-	var qry = cm.connection.Where("id = ? AND postid = ?", commentID, postID).Updates(data)
-	if err := qry.Error; err != nil {
-		return comment.Comment{}, err
-	}
-
-	if qry.RowsAffected < 1 {
-		return comment.Comment{}, errors.New("no data affected")
-	}
-
-	return data, nil
-}
-
 func (cm *model) GetComment(userID string) ([]comment.Comment, error) {
 	var result []comment.Comment
 	if err := cm.connection.Where("userid = ?", userID).Find(&result).Error; err != nil {
@@ -47,4 +33,33 @@ func (cm *model) GetComment(userID string) ([]comment.Comment, error) {
 	}
 
 	return result, nil
+}
+
+// Delete Komentar
+func (cm *model) DeleteComment(commentID uint) error {
+	// Membuat objek komentar dengan ID yang diberikan
+	var commentToDelete comment.Comment
+	commentToDelete.ID = commentID
+
+	// Menghapus komentar dari database
+	if err := cm.connection.Delete(&commentToDelete).Error; err != nil {
+		return err
+	}
+
+	return nil
+}
+
+// Tambah Komentar
+func (cm *model) AddComment(userID *jwt.Token, contentBaru comment.Comment) (comment.Comment, error) {
+	// Membuat objek komentar dengan data yang diberikan
+	newComment := comment.Comment{
+		Content: contentBaru.Content,
+	}
+
+	// Memasukkan komentar baru ke dalam database
+	if err := cm.connection.Create(&newComment).Error; err != nil {
+		return comment.Comment{}, err
+	}
+
+	return newComment, nil
 }

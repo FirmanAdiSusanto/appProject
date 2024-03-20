@@ -16,5 +16,5 @@ type User struct {
 	Password string `json:"password" form:"password" validate:"required"`
 	Hp       string `gorm:"type:varchar(13);uniqueIndex;primaryKey" json:"hp" form:"hp" validate:"required,max=13,min=10"`
 	// Posts    []Post
-	Comments []data.Comment
+	Comments []data.Comment `gorm:"foreignKey:userid;references:Hp"`
 }

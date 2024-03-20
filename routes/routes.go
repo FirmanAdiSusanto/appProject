@@ -17,9 +17,6 @@ func InitRoute(c *echo.Echo, ctl user.UserController, cc comment.CommentControll
 
 func userRoute(c *echo.Echo, ctl user.UserController) {
 	c.POST("/login", ctl.Login())
-	c.GET("/users/:hp", ctl.Profile(), echojwt.WithConfig(echojwt.Config{
-		SigningKey: []byte(config.JWTSECRET),
-	}))
 
 	//GetUserByHp
 	c.GET("/users/:hp", ctl.GetUserByHP())
@@ -38,8 +35,9 @@ func userRoute(c *echo.Echo, ctl user.UserController) {
 }
 
 func commentRoute(c *echo.Echo, cc comment.CommentController) {
-	//Komentar
-	c.POST("/comment", cc.Add(), echojwt.WithConfig(echojwt.Config{
-		SigningKey: []byte(config.JWTSECRET),
-	}))
+	//Menambahkan Komentar
+	c.POST("/comment", cc.AddComment())
+
+	//Delete Komentar
+	c.DELETE("/comment/:commentID", cc.Delete())
 }
