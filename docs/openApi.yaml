@@ -68,12 +68,8 @@ paths:
                 data:
                   nama: "anto"
                   email: "anto@gmail.com"
-                  password: "anto"
                   hp: "08955"
                   picture: "image/jpeg/png"
-                  post_id: 1
-                  comment_id: 1
-                    
         '500':
               $ref: '#/components/responses/500'
   /users/{email}:
@@ -98,7 +94,6 @@ paths:
             example:
                nama: "anto"
                email: "anto@gmail.com"
-               password: "anto"
                hp: "08955"
                picture: "image/jpeg/png"
       responses:
@@ -199,7 +194,6 @@ paths:
             schema:
               $ref: '#/components/schemas/Posting'
             example:
-              title: "penemuan batu"
               conten: "ditemukan sebuah batu raksasa"
               picture: "image/jpeg/png"
               
@@ -223,33 +217,81 @@ paths:
         - post
       security: 
         - bearerAuth: []
-      description: "mendapatkan profile pengguna berdasarkan token"
+      description: "Retrieve posts"
       responses:
         '200':
-          description: "berhasil mendapatkan data"
+          description: "Success response"
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/ApiDataResponse'
+                type: array
+                items:
+                  $ref: '#/components/schemas/Posting'
               example: 
-                code: 200
-                message: "berhasil mendapatkan data"
-                data:
-                  post_id: 1
-                  title: "penemuan batu"
+                - post_id: 1
                   conten: "ditemukan sebuah batu raksasa"
                   picture: "image/jpeg"
                   pemilik: "anto1@gmail.com"
-                  
         '500':
-              $ref: '#/components/responses/500'
-  /post/{postId}:
+          $ref: '#/components/responses/500'
+
+  /posts/{post_id}:
+    get:
+      tags: 
+        - post
+      parameters:
+        - in: path
+          name: post_id
+          required: true
+          schema:
+            type: integer
+      security: 
+        - bearerAuth: []
+      description: "Retrieve details of a post along with its comments"
+      responses:
+        '200':
+          description: "Success response"
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  post:
+                    $ref: '#/components/schemas/Posting'
+                  comments:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/Comment'
+              example: 
+                post:
+                  conten: "ditemukan sebuah batu raksasa"
+                  picture: "image/jpeg"
+                  pemilik: "anto1@gmail.com"
+                comments:
+                  - comment_id: 1
+                    conten: "sangat luar biasa"
+                    pemilik: "andi@gmail.com"
+                  - comment_id: 2
+                    conten: "saya tidak percaya"
+                    pemilik: "asrus@gmail.com"
+        '404':
+          description: "Post not found"
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiResponse'
+              example:
+                code: 404
+                message: "Post not found"
+        '500':
+          $ref: '#/components/responses/500'
+  /post/{post_Id}:
     put:
       tags:
         - post
       parameters:
          - in: path
-           name: postId
+           name: post_Id
            required: true
            schema:
             type: integer
@@ -291,7 +333,7 @@ paths:
       description: "Deletes posting"
       parameters:
         - in: path
-          name: postId
+          name: post_Id
           required: true
           schema:
             type: integer
@@ -310,62 +352,55 @@ paths:
                 message: "Berhasil menghapus data"
         '500':
           $ref: '#/components/responses/500'
-  /comment:
+  /comments:
     post:
       tags:
-      - comment
-      description: "Tambah postingan"
+        - comment
+      summary: "Add a new comment to a post"
+      security:
+        - bearerAuth: []
       requestBody:
+        required: true
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/Comment'
+              type: object
+              properties:
+                post_id:
+                  type: integer
+                conten:
+                  type: string
+                  format: content
+              required:
+                - post_id
+                - conten
             example:
-              title: "penemuan batu"
-              conten: "ditemukan sebuah batu raksasa"
-              comment: "waduh ada di mana itu"
-              
+              post_id: 1
+              conten: "sangat luar biasa"
       responses:
         '201':
-          description: "sukses menambahkan data"
+          description: "Comment added successfully"
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/ApiDataResponse'
               example:
                 code: 201
-                message: "Berhasil menambahkan data"
-       
+                message: "Comment added successfully"
         '400':
           $ref: '#/components/responses/400'
-        '500':
-          $ref: '#/components/responses/500'
-    get:
-      tags: 
-        - comment
-      security: 
-        - bearerAuth: []
-      description: "mendapatkan profile pengguna berdasarkan token"
-      responses:
-        '200':
-          description: "berhasil mendapatkan data"
+        '401':
+          description: "Unauthorized"
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/ApiDataResponse'
-              example: 
-                code: 200
-                message: "berhasil mendapatkan data"
-                data:
-                  comment_id: 1
-                  post_id: 1
-                  title: "penemuan batu"
-                  conten: "ditemukan sebuah batu raksasa"
-                  comment: "waduh ada di mana itu"
-                  pemilik: "anto1@gmail.com"
-                  
+                $ref: '#/components/schemas/ApiResponse'
+              example:
+                code: 401
+                message: "Unauthorized: JWT token is missing or invalid"
         '500':
-              $ref: '#/components/responses/500'  
+          $ref: '#/components/responses/500'
+
   /comment/{commentId}:
     put:
       tags:
@@ -457,16 +492,12 @@ components:
       type: object
       required:
         - user_id
-        - title
         - conten
         - picture
       properties:
         user_id:
          type: integer
          format: user_id
-        title:
-         type: string
-         format: title
         conten:
          type: string
          format: conten
