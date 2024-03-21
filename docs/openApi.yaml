@@ -188,7 +188,7 @@ paths:
           $ref: '#/components/responses/400'
         '500':
           $ref: '#/components/responses/500'
-  /posting:
+  /post:
     post:
       tags:
       - post
@@ -243,13 +243,13 @@ paths:
                   
         '500':
               $ref: '#/components/responses/500'
-  /posting/{postingId}:
+  /post/{postId}:
     put:
       tags:
         - post
       parameters:
          - in: path
-           name: postingId
+           name: postId
            required: true
            schema:
             type: integer
@@ -291,7 +291,7 @@ paths:
       description: "Deletes posting"
       parameters:
         - in: path
-          name: postingId
+          name: postId
           required: true
           schema:
             type: integer
