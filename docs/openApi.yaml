@@ -1,0 +1,561 @@
+openapi: 3.0.0
+info:
+  description: |
+    This is a sample Petstore server.  You can find
+    out more about Swagger at
+    [http://swagger.io](http://swagger.io) or on
+    [irc.freenode.net, #swagger](http://swagger.io/irc/).
+  version: "1.0.0"
+  title: "tera app api"
+servers:
+  - description: SwaggerHub API Auto Mocking
+    url: https://virtserver.swaggerhub.com/MOCHAMADBAYUAJIE/TeraApp/1.0.0
+tags:
+  - name: user
+    description: Organize for user
+  - name: post
+    description: Organize for posting
+  - name: comment
+    description: Organize for comment
+paths:
+  /users:
+    post:
+      tags: 
+        - user
+      description: "register user"
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/User'
+            example:
+              nama: "anto"
+              email: "anto@gmail.com"
+              password: "anto"
+              hp: "08955"
+      responses:
+        '201':
+          description: "sukses menambahkan data"
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiDataResponse'
+              example:
+                code: 201
+                message: "Berhasil menambahkan data"
+       
+        '400':
+          $ref: '#/components/responses/400'
+        '500':
+          $ref: '#/components/responses/500'
+          
+    get:
+      tags: 
+        - user
+      security: 
+        - bearerAuth: []
+      description: "mendapatkan profile pengguna berdasarkan token"
+      responses:
+        '200':
+          description: "berhasil mendapatkan data"
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiDataResponse'
+              example: 
+                code: 200
+                message: "berhasil mendapatkan data"
+                data:
+                  nama: "anto"
+                  email: "anto@gmail.com"
+                  password: "anto"
+                  hp: "08955"
+                  picture: "image/jpeg/png"
+                  post_id: 1
+                  comment_id: 1
+                    
+        '500':
+              $ref: '#/components/responses/500'
+  /users/{email}:
+    put:
+      tags:
+        - user
+      parameters:
+         - in: path
+           name: email
+           required: true
+           schema:
+            type: string
+      security: 
+        - bearerAuth: []
+      summary: "update profile user"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/User'
+            example:
+               nama: "anto"
+               email: "anto@gmail.com"
+               password: "anto"
+               hp: "08955"
+               picture: "image/jpeg/png"
+      responses:
+        '200':
+          description: "berhasil mengubah data"
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiDataResponse'
+              example: 
+                code : 200
+                message: "berhasil mengubah data"
+                data:
+                  nama: "anto1"
+                  email: "anto1@gmail.com"
+                  password: "anto1"
+                  hp: "08955"
+        '400':
+          $ref: '#/components/responses/400'
+        '500':
+          $ref: '#/components/responses/500'
+          
+    delete:
+      tags:
+        - user
+      summary: "Delete user"
+      description: "Deletes Email"
+      parameters:
+        - in: path
+          name: email
+          required: true
+          schema:
+            type: string
+      security:
+        - bearerAuth: []
+      responses:
+          
+        '200':
+          description: "berhasil menghapus data"
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiDataResponse'
+              example:
+                code: 200
+                message: "Berhasil menghapus data"
+        '500':
+          $ref: '#/components/responses/500'
+
+  /login:
+    post:
+      tags:
+        - user
+      summary: "login user"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                email:
+                  type: string
+                  format: email
+                password:
+                  type: string
+                  format: password
+            example:
+                  email: "anto1@gmail.com"
+                  password: "anto1"
+      
+      responses:
+        '200':
+          description: "sukses login"
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiDataResponse'
+              example: 
+                code: 200
+                message: "berhasil login"
+                data:
+                  nama: "anto1"
+                  email: "anto1@gmail.com"
+                  token: "cunsdhshduhsdhfuhyerolsmklnkdsjbcjdhdgfyegfbcvdmkfirfbncmxn"
+        '400':
+          $ref: '#/components/responses/400'
+        '500':
+          $ref: '#/components/responses/500'
+  /posting:
+    post:
+      tags:
+      - post
+      description: "Tambah postingan"
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Posting'
+            example:
+              title: "penemuan batu"
+              conten: "ditemukan sebuah batu raksasa"
+              picture: "image/jpeg/png"
+              
+      responses:
+        '201':
+          description: "sukses menambahkan data"
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiDataResponse'
+              example:
+                code: 201
+                message: "Berhasil menambahkan data"
+       
+        '400':
+          $ref: '#/components/responses/400'
+        '500':
+          $ref: '#/components/responses/500'
+    get:
+      tags: 
+        - post
+      security: 
+        - bearerAuth: []
+      description: "mendapatkan profile pengguna berdasarkan token"
+      responses:
+        '200':
+          description: "berhasil mendapatkan data"
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiDataResponse'
+              example: 
+                code: 200
+                message: "berhasil mendapatkan data"
+                data:
+                  post_id: 1
+                  title: "penemuan batu"
+                  conten: "ditemukan sebuah batu raksasa"
+                  picture: "image/jpeg"
+                  pemilik: "anto1@gmail.com"
+                  
+        '500':
+              $ref: '#/components/responses/500'
+  /posting/{postingId}:
+    put:
+      tags:
+        - post
+      parameters:
+         - in: path
+           name: postingId
+           required: true
+           schema:
+            type: integer
+      security: 
+        - bearerAuth: []
+      summary: "update postingan"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Posting'
+            example:
+              title: "mudik lebaran"
+              conten: "mudik lebaran mulai ramei kendaraan"
+              picture: "image/jpge/png"
+      responses:
+        '200':
+          description: "berhasil mengubah data"
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiDataResponse'
+              example: 
+                code : 200
+                message: "berhasil mengubah data"
+                data:
+                  title: "mudik lebaran1"
+                  conten: "mudik lebaran mulai ramei kendaraan1"
+                  picture: "image/jpge/png"
+        '400':
+          $ref: '#/components/responses/400'
+        '500':
+          $ref: '#/components/responses/500'
+    delete:
+      tags:
+        - post
+      summary: "Delete posting"
+      description: "Deletes posting"
+      parameters:
+        - in: path
+          name: postingId
+          required: true
+          schema:
+            type: integer
+      security:
+        - bearerAuth: []
+      responses:
+          
+        '200':
+          description: "berhasil menghapus data"
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiDataResponse'
+              example:
+                code: 200
+                message: "Berhasil menghapus data"
+        '500':
+          $ref: '#/components/responses/500'
+  /comment:
+    post:
+      tags:
+      - comment
+      description: "Tambah postingan"
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Comment'
+            example:
+              title: "penemuan batu"
+              conten: "ditemukan sebuah batu raksasa"
+              comment: "waduh ada di mana itu"
+              
+      responses:
+        '201':
+          description: "sukses menambahkan data"
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiDataResponse'
+              example:
+                code: 201
+                message: "Berhasil menambahkan data"
+       
+        '400':
+          $ref: '#/components/responses/400'
+        '500':
+          $ref: '#/components/responses/500'
+    get:
+      tags: 
+        - comment
+      security: 
+        - bearerAuth: []
+      description: "mendapatkan profile pengguna berdasarkan token"
+      responses:
+        '200':
+          description: "berhasil mendapatkan data"
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiDataResponse'
+              example: 
+                code: 200
+                message: "berhasil mendapatkan data"
+                data:
+                  comment_id: 1
+                  post_id: 1
+                  title: "penemuan batu"
+                  conten: "ditemukan sebuah batu raksasa"
+                  comment: "waduh ada di mana itu"
+                  pemilik: "anto1@gmail.com"
+                  
+        '500':
+              $ref: '#/components/responses/500'  
+  /comment/{commentId}:
+    put:
+      tags:
+        - comment
+      parameters:
+         - in: path
+           name: commentId
+           required: true
+           schema:
+            type: integer
+      security: 
+        - bearerAuth: []
+      summary: "update postingan"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/User'
+            example:
+              conten: "ditemukan sebuah batu raksasa"
+              picture: "image/jpeg/png"
+      responses:
+        '200':
+          description: "berhasil mengubah data"
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiDataResponse'
+              example: 
+                code : 200
+                message: "berhasil mengubah data"
+                data:
+                  conten: "ditemukan sebuah batu raksasa2"
+                  picture: "image/jpeg/png"
+        '400':
+          $ref: '#/components/responses/400'
+        '500':
+          $ref: '#/components/responses/500'
+    delete:
+      tags:
+        - comment
+      summary: "Delete commentar"
+      description: "Deletes commentar"
+      parameters:
+        - in: path
+          name: commentId
+          required: true
+          schema:
+            type: integer
+      security:
+        - bearerAuth: []
+      responses:
+          
+        '200':
+          description: "berhasil menghapus data"
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiDataResponse'
+              example:
+                code: 200
+                message: "Berhasil menghapus data"
+        '500':
+          $ref: '#/components/responses/500'
+components:
+  schemas:
+    Comment:
+      type: object
+      required:
+        - post_id
+        - conten
+        - comment
+        - pemilik
+      properties:
+        post_id:
+         type: integer
+         format: post_id
+        conten:
+         type: string
+         format: content
+        comment:
+         type: string
+         format: comment
+        pemilik:
+         type: string
+         format: pemilik
+    Posting:
+      type: object
+      required:
+        - user_id
+        - title
+        - conten
+        - picture
+      properties:
+        user_id:
+         type: integer
+         format: user_id
+        title:
+         type: string
+         format: title
+        conten:
+         type: string
+         format: conten
+        picture:
+         type: string
+         format: picture
+    User:
+      type: object
+      required:
+        - nama
+        - email
+        - password
+        - hp
+        - picture
+        - post_id
+        - comment_id
+      properties:
+        nama:
+          type: string
+          format: nama
+        email:
+          type: string
+          format: email
+        password:
+          type: string
+          format: password
+          minLength: 8
+        hp:
+          type: string
+          format: hp
+        picture:
+          type: string
+          format: picture
+        post_id:
+          type: integer
+          format: post_id
+    ApiResponse:
+      type: object
+      properties:
+        code:
+          type: string
+        message:
+          type: string
+    ApiDataResponse:
+      type: object
+      properties:
+        code:
+          type: string
+        data:
+          type: object
+        message:
+          type: string
+  requestBodies:
+    User:
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/User'
+      required: true
+    UserArray:
+      content:
+        application/json:
+          schema:
+            type: array
+            items:
+              $ref: '#/components/schemas/User'
+      description: List of user object
+      required: true
+  responses:
+    '400':
+      description: "Data yang dikirim tidak sesuai"
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ApiResponse'
+          example: 
+            code: 400
+            message: "terdapat kesalahan pada data input"
+    '500':
+      description: "Server error"
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ApiResponse'
+          example:
+            code: 500
+            message: "Terjadi kesalahan pada server"
+  securitySchemes:
+    bearerAuth:            
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
