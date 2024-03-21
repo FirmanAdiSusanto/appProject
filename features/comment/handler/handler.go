@@ -95,6 +95,12 @@ func (ct *controller) AddComment() echo.HandlerFunc {
 		}
 
 		token, ok := c.Get("user").(*jwt.Token)
+		defer func() {
+			if err := recover(); err != nil {
+				log.Println("error jwt creation:", err)
+
+			}
+		}()
 		if !ok {
 			return c.JSON(http.StatusBadRequest,
 				helper.ResponseFormat(http.StatusBadRequest, helper.UserInputError, nil))
