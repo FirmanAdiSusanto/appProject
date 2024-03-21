@@ -39,5 +39,5 @@ func commentRoute(c *echo.Echo, cc comment.CommentController) {
 	c.POST("/comment", cc.AddComment())
 
 	//Delete Komentar
-	c.DELETE("/comment/:commentID", cc.Delete())
+	c.DELETE("/comment/:commentID", cc.DeleteComment())
 }

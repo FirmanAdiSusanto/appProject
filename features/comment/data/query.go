@@ -2,8 +2,9 @@ package data
 
 import (
 	"21-api/features/comment"
+	"errors"
+	"time"
 
-	"github.com/golang-jwt/jwt/v5"
 	"gorm.io/gorm"
 )
 
@@ -17,49 +18,37 @@ func New(db *gorm.DB) comment.CommentModel {
 	}
 }
 
-func (cm *model) InsertComment(PostID string, contentBaru comment.Comment) (comment.Comment, error) {
-	var inputProcess = Comment{Content: contentBaru.Content, PostID: PostID}
-	if err := cm.connection.Create(&inputProcess).Error; err != nil {
-		return comment.Comment{}, err
+// Tambah Komentar
+func (cm *model) AddComment(userID string, content string) error {
+	// Implementasi fungsi AddComment dengan dua parameter
+	var inputProcess = Comment{
+		UserID:    userID,
+		Content:   content,
+		CreatedAt: time.Now().UTC(),
 	}
 
-	return comment.Comment{Content: inputProcess.Content}, nil
-}
-
-func (cm *model) GetComment(userID string) ([]comment.Comment, error) {
-	var result []comment.Comment
-	if err := cm.connection.Where("userid = ?", userID).Find(&result).Error; err != nil {
-		return nil, err
-	}
-
-	return result, nil
-}
-
-// Delete Komentar
-func (cm *model) DeleteComment(commentID uint) error {
-	// Membuat objek komentar dengan ID yang diberikan
-	var commentToDelete comment.Comment
-	commentToDelete.ID = commentID
-
-	// Menghapus komentar dari database
-	if err := cm.connection.Delete(&commentToDelete).Error; err != nil {
+	qry := cm.connection.Create(&inputProcess)
+	if err := qry.Error; err != nil {
 		return err
 	}
 
+	if qry.RowsAffected < 1 {
+		return errors.New("no data affected")
+	}
 	return nil
 }
 
-// Tambah Komentar
-func (cm *model) AddComment(userID *jwt.Token, contentBaru comment.Comment) (comment.Comment, error) {
-	// Membuat objek komentar dengan data yang diberikan
-	newComment := comment.Comment{
-		Content: contentBaru.Content,
+// Delete Komentar
+func (cm *model) DeleteComment(userID string, postID uint, commentID string) error {
+	qry := cm.connection.Where("id = ? AND userid = ?", commentID, userID).Delete(&Comment{})
+
+	if err := qry.Error; err != nil {
+		return err
 	}
 
-	// Memasukkan komentar baru ke dalam database
-	if err := cm.connection.Create(&newComment).Error; err != nil {
-		return comment.Comment{}, err
+	if qry.RowsAffected < 1 {
+		return errors.New("no data affected")
 	}
 
-	return newComment, nil
+	return nil
 }
