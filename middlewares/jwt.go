@@ -1,7 +1,7 @@
 package middlewares
 
 import (
-	"21-api/config"
+	"TeraApps/config"
 	"errors"
 	"log"
 	"time"

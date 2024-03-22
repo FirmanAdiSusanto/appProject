@@ -1,9 +1,9 @@
 package services
 
 import (
-	"21-api/features/user"
-	"21-api/helper"
-	"21-api/middlewares"
+	"TeraApps/features/user"
+	"TeraApps/helper"
+	"TeraApps/middlewares"
 	"errors"
 	"log"
 
@@ -25,33 +25,36 @@ func NewService(m user.UserModel) user.UserService {
 	}
 }
 
+// Fungsi digunakan untuk memproses registrasi pengguna baru dengan menerima data pengguna baru
 func (s *service) Register(newData user.User) error {
 	var registerValidate user.Register
-	registerValidate.Fullname = newData.Fullname
+	registerValidate.Name = newData.Name
 	registerValidate.Email = newData.Email
 	registerValidate.Password = newData.Password
-	registerValidate.Birthday = newData.Birthday
+	registerValidate.Hp = newData.Hp
 	err := s.v.Struct(&registerValidate)
 	if err != nil {
 		log.Println("error validasi", err.Error())
 		return err
 	}
 
-	newPassword, err := s.pm.HashPassword(newData.Password)
+	newPassword, err := s.pm.HashPassword(newData.Password) //Menjadikan Password menjadi bentuk Hash
 	if err != nil {
 		return errors.New(helper.ServiceGeneralError)
 	}
 	newData.Password = newPassword
 
-	err = s.model.AddUser(newData)
+	err = s.model.InsertUser(newData)
 	if err != nil {
 		return errors.New(helper.ServerGeneralError)
 	}
 	return nil
 }
+
+// Fungsi digunakan untuk memeriksa kredensial login pengguna yang diberikan dan mengembalikan informasi pengguna serta token akses JWT jika proses login berhasil
 func (s *service) Login(loginData user.User) (user.User, string, error) {
 	var loginValidate user.Login
-	loginValidate.Email = loginData.Email
+	loginValidate.Email = loginData.Hp
 	loginValidate.Password = loginData.Password
 	err := s.v.Struct(&loginValidate)
 	if err != nil {
@@ -69,7 +72,7 @@ func (s *service) Login(loginData user.User) (user.User, string, error) {
 		return user.User{}, "", errors.New(helper.UserCredentialError)
 	}
 
-	token, err := middlewares.GenerateJWT(dbData.ID)
+	token, err := middlewares.GenerateJWT(dbData.Email)
 	if err != nil {
 		return user.User{}, "", errors.New(helper.ServiceGeneralError)
 	}
@@ -77,9 +80,10 @@ func (s *service) Login(loginData user.User) (user.User, string, error) {
 	return dbData, token, nil
 }
 
+// Mendapatkan profil pengguna berdasarkan token akses JWT
 func (s *service) Profile(token *jwt.Token) (user.User, error) {
-	decodeId := middlewares.DecodeToken(token)
-	result, err := s.model.GetUserByID(decodeId)
+	decodeHp := middlewares.DecodeToken(token) //Melakukan dekode token akses JWT
+	result, err := s.model.GetUserByHP(decodeHp)
 	if err != nil {
 		return user.User{}, err
 	}
@@ -87,72 +91,62 @@ func (s *service) Profile(token *jwt.Token) (user.User, error) {
 	return result, nil
 }
 
-func (s *service) Update(token *jwt.Token, newData user.User) (user.User, error) {
-	decodedID := middlewares.DecodeToken(token)
-
-	existingUser, err := s.model.GetUserByID(decodedID)
+// Delete User
+func (s *service) DeleteUser(userID string) error {
+	// Lakukan logika penghapusan pengguna berdasarkan userID
+	err := s.model.DeleteUser(userID)
 	if err != nil {
-		return user.User{}, errors.New("user not found")
+		return err
 	}
-
-	if newData.Fullname != "" {
-		existingUser.Fullname = newData.Fullname
-	}
-
-	if newData.Email != "" {
-		existingUser.Email = newData.Email
-	}
-
-	if newData.Password != "" {
-		newPassword, err := s.pm.HashPassword(newData.Password)
-		if err != nil {
-			return user.User{}, errors.New(helper.ServiceGeneralError)
-		}
-		existingUser.Password = newPassword
-	}
-
-	if newData.Birthday != "" {
-		existingUser.Birthday = newData.Birthday
-	}
-
-	if newData.Avatar != "" {
-		existingUser.Avatar = newData.Avatar
-	}
-
-	result, err := s.model.Update(decodedID, existingUser)
-	if err != nil {
-		return user.User{}, err
-	}
-
-	return result, nil
-}
-
-func (s *service) Delete(token *jwt.Token) error {
-	decodedID := middlewares.DecodeToken(token)
-	if decodedID == 0 {
-		log.Println("error decode token:", "token tidak ditemukan")
-		return errors.New("data tidak valid")
-	}
-
-	err := s.model.Delete(decodedID)
-	if err != nil {
-		return errors.New(helper.CannotDelete)
-	}
-
 	return nil
 }
 
-func (s *service) GetUserByIDParam(token *jwt.Token, idFromParam uint) (user.User, error) {
-	decodedID := middlewares.DecodeToken(token)
-
-	if idFromParam != decodedID {
-		return user.User{}, errors.New("you can only view your own account")
-	}
-
-	result, err := s.model.GetUserByID(decodedID)
+// GetUserByHP digunakan untuk mendapatkan pengguna berdasarkan nomor HP
+func (s *service) GetUserByHP(hp string) (user.User, error) {
+	// Memanggil model untuk mendapatkan pengguna berdasarkan nomor HP
+	result, err := s.model.GetUserByHP(hp)
 	if err != nil {
 		return user.User{}, err
 	}
 
 	return result, nil
+}
+
+// UpdateUser digunakan untuk memperbarui pengguna berdasarkan nomor HP
+func (s *service) UpdateUser(hp string, newData user.User) error {
+	// Validasi data pengguna yang akan diperbarui
+	err := s.v.Struct(&newData)
+	if err != nil {
+		log.Println("error validasi", err.Error())
+		return err
+	}
+
+	// Periksa apakah pengguna yang ingin diperbarui berdasarkan nomor HP ada dalam database
+	existingUser, err := s.model.GetUserByHP(hp)
+	if err != nil {
+		return err // Pengguna tidak ditemukan, kembalikan kesalahan
+	}
+
+	// Periksa apakah ada perubahan pada kata sandi
+	if newData.Password != "" {
+		// Lakukan hashing pada kata sandi baru menggunakan PasswordManager
+		hashedPassword, err := s.pm.HashPassword(newData.Password)
+		if err != nil {
+			return err // Kembalikan kesalahan jika hashing gagal
+		}
+		// Gunakan kata sandi yang telah di-hash
+		existingUser.Password = hashedPassword
+	}
+
+	// Perbarui data pengguna dengan informasi baru
+	existingUser.Name = newData.Name
+	existingUser.Email = newData.Email
+
+	// Perbarui data pengguna di database
+	err = s.model.UpdateUser(hp, existingUser)
+	if err != nil {
+		return err // Kembalikan kesalahan jika gagal memperbarui pengguna di database
+	}
+
+	return nil
 }

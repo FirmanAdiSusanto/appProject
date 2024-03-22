@@ -1,9 +1,7 @@
 package config
 
 import (
-	comment "21-api/features/comment/data"
-	post "21-api/features/post/data"
-	user "21-api/features/user/data"
+	user "TeraApps/features/user/data"
 	"fmt"
 	"os"
 
@@ -78,7 +76,7 @@ func InitSQL(c AppConfig) *gorm.DB {
 		return nil
 	}
 
-	db.AutoMigrate(&user.User{}, &comment.Comment{}, &post.Post{})
+	db.AutoMigrate(&user.User{})
 
 	return db
 }

@@ -1,16 +1,11 @@
 package data
 
-import (
-	comment "21-api/features/comment/data"
-	post "21-api/features/post/data"
-)
-
 type User struct {
-	ID        uint   `gorm:"primary_key;auto_increment"`
-	name      string `validate:"required"`
-	Email     string `gorm:"unique"`
-	Password  string
-	Handphone string
-	Posts     []post.Post       `gorm:"foreignKey:UserID"`
-	Comments  []comment.Comment `gorm:"foreignKey:UserID"`
+	ID       uint   `gorm:"primaryKey"`
+	Name     string `gorm:"not null"`
+	Email    string `gorm:"not null"`
+	Password string `json:"password" form:"password" validate:"required"`
+	Hp       string `gorm:"type:varchar(13);uniqueIndex;primaryKey" json:"hp" form:"hp" validate:"required,max=13,min=10"`
+	// Posts    []Post
+	//Comments []data.Comment `gorm:"foreignKey:userid;references:Hp"`
 }
