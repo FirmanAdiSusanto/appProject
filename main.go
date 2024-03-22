@@ -2,12 +2,15 @@ package main
 
 import (
 	"21-api/config"
-	td "21-api/features/comment/data"
-	th "21-api/features/comment/handler"
-	ts "21-api/features/comment/services"
-	"21-api/features/user/data"
-	"21-api/features/user/handler"
-	"21-api/features/user/services"
+	cr "21-api/features/comment/data"
+	ch "21-api/features/comment/handler"
+	cs "21-api/features/comment/service"
+	pr "21-api/features/post/data"
+	ph "21-api/features/post/handler"
+	ps "21-api/features/post/service"
+	ur "21-api/features/user/data"
+	uh "21-api/features/user/handler"
+	us "21-api/features/user/service"
 	"21-api/routes"
 
 	"github.com/labstack/echo/v4"
@@ -17,19 +20,24 @@ import (
 func main() {
 	e := echo.New()            // inisiasi echo
 	cfg := config.InitConfig() // baca seluruh system variable
-	db := config.InitSQL(cfg)  // Koneksi ke DB
+	db := config.InitSQL(cfg)  // konek DB
 
-	userData := data.New(db)
-	userService := services.NewService(userData)
-	userHandler := handler.NewUserHandler(userService)
+	uq := ur.New(db) // bagian yang menghungkan coding kita ke database / bagian dimana kita ngoding untk ke DB
+	us := us.NewService(uq)
+	uh := uh.NewUserHandler(us)
 
-	commentData := td.New(db)
-	commentService := ts.NewCommentService(commentData)
-	commentHandler := th.NewHandler(commentService)
+	cq := cr.New(db) // bagian yang menghungkan coding kita ke database / bagian dimana kita ngoding untk ke DB
+	cs := cs.NewCommentService(cq)
+	ch := ch.NewHandler(cs)
+	// bagian yang menghandle segala hal yang berurusan dengan HTTP / echo
+
+	pq := pr.New(db)
+	ps := ps.NewPostService(pq)
+	ph := ph.NewHandler(ps)
 
 	e.Pre(middleware.RemoveTrailingSlash())
 	e.Use(middleware.Logger())
 	e.Use(middleware.CORS()) // ini aja cukup
-	routes.InitRoute(e, userHandler, commentHandler)
+	routes.InitRoute(e, uh, ph, ch)
 	e.Logger.Fatal(e.Start(":1323"))
 }

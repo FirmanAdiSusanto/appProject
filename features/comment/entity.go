@@ -1,36 +1,31 @@
 package comment
 
 import (
-	"time"
-
 	"github.com/golang-jwt/jwt/v5"
 	"github.com/labstack/echo/v4"
 )
 
 type CommentController interface {
-	AddComment() echo.HandlerFunc
-	DeleteComment() echo.HandlerFunc
+	Add() echo.HandlerFunc
+	Update() echo.HandlerFunc
+	Delete() echo.HandlerFunc
+	ShowMyComments() echo.HandlerFunc
 }
 
 type CommentModel interface {
-	DeleteComment(userID string, postID uint, AddComment string) error
-	AddComment(userID string, AddComment string) error
+	AddComment(userid uint, komentarBaru string) (Comment, error)
+	UpdateComment(userid uint, commentID uint, data Comment) (Comment, error)
+	DeleteComment(userid uint, commentID uint) error
+	GetCommentByOwner(userid uint) ([]Comment, error)
 }
 
 type CommentService interface {
-	AddComment(token *jwt.Token, postID uint, AddComment string) error
-	DeleteComment(token *jwt.Token, postID uint, commentID string) error
+	AddComment(userid *jwt.Token, komentarBaru string) (Comment, error)
+	UpdateComment(userid *jwt.Token, commentID uint, data Comment) (Comment, error)
+	DeleteComment(userid *jwt.Token, commentID uint) error
+	GetCommentByOwner(userid *jwt.Token) ([]Comment, error)
 }
 
 type Comment struct {
-	Id        uint
-	PostID    uint
-	UserID    string
-	Content   string
-	CreatedAt time.Time
-}
-
-type AddCommentComment struct {
-	postID  uint
-	Content string
+	Komentar string
 }

@@ -3,7 +3,6 @@ package data
 import (
 	"21-api/features/comment"
 	"errors"
-	"time"
 
 	"gorm.io/gorm"
 )
@@ -18,37 +17,44 @@ func New(db *gorm.DB) comment.CommentModel {
 	}
 }
 
-// Tambah Komentar
-func (cm *model) AddComment(userID string, content string) error {
-	// Implementasi fungsi AddComment dengan dua parameter
-	var inputProcess = Comment{
-		UserID:    userID,
-		Content:   content,
-		CreatedAt: time.Now().UTC(),
+func (cm *model) AddComment(userid uint, komentarBaru string) (comment.Comment, error) {
+	var inputProcess = Comment{Komentar: komentarBaru, UserID: userid}
+	if err := cm.connection.Create(&inputProcess).Error; err != nil {
+		return comment.Comment{}, err
 	}
+	return comment.Comment{Komentar: inputProcess.Komentar}, nil
+}
 
-	qry := cm.connection.Create(&inputProcess)
+func (cm *model) UpdateComment(userid uint, commentID uint, data comment.Comment) (comment.Comment, error) {
+	var qry = cm.connection.Where("user_id = ? AND id = ?", userid, commentID).Updates(data)
 	if err := qry.Error; err != nil {
-		return err
+		return comment.Comment{}, err
 	}
 
 	if qry.RowsAffected < 1 {
+		return comment.Comment{}, errors.New("no data affected")
+	}
+
+	return data, nil
+}
+
+func (cm *model) DeleteComment(userid uint, commentID uint) error {
+	result := cm.connection.Unscoped().Where("user_id = ? AND id = ?", userid, commentID).Delete(&Comment{}) // Menambahkan kondisi untuk pemilik dan ID buku
+	if result.Error != nil {
+		return result.Error
+	}
+
+	if result.RowsAffected == 0 {
 		return errors.New("no data affected")
 	}
+
 	return nil
 }
 
-// Delete Komentar
-func (cm *model) DeleteComment(userID string, postID uint, commentID string) error {
-	qry := cm.connection.Where("id = ? AND userid = ?", commentID, userID).Delete(&Comment{})
-
-	if err := qry.Error; err != nil {
-		return err
+func (cm *model) GetCommentByOwner(userid uint) ([]comment.Comment, error) {
+	var result []comment.Comment
+	if err := cm.connection.Where("user_id = ?", userid).Find(&result).Error; err != nil {
+		return nil, err
 	}
-
-	if qry.RowsAffected < 1 {
-		return errors.New("no data affected")
-	}
-
-	return nil
+	return result, nil
 }

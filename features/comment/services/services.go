@@ -23,34 +23,74 @@ func NewCommentService(model comment.CommentModel) comment.CommentService {
 	}
 }
 
-// Fungsi untuk menambahkan komentar baru ke dalam database
-func (s *service) AddComment(token *jwt.Token, postID uint, content string) error {
-	decodeUserID := middlewares.DecodeToken(token)
-	if decodeUserID == "" {
+func (s *service) AddComment(userid *jwt.Token, komentarBaru string) (comment.Comment, error) {
+	id := middlewares.DecodeToken(userid)
+	if id == 0 {
+		log.Println("error decode token", "token tidak ditemukan")
+		return comment.Comment{}, errors.New("data tidak valid")
+	}
+
+	err := s.v.Var(komentarBaru, "required")
+	if err != nil {
+		log.Println("error validasi deskripsi", err.Error())
+		return comment.Comment{}, err
+	}
+
+	result, err := s.m.AddComment(id, komentarBaru)
+	if err != nil {
+		return comment.Comment{}, errors.New(helper.ErrorGeneralServer)
+	}
+
+	return result, nil
+}
+
+func (s *service) UpdateComment(userid *jwt.Token, commentID uint, data comment.Comment) (comment.Comment, error) {
+	id := middlewares.DecodeToken(userid)
+	if id == 0 {
+		log.Println("error decode token:", "token tidak ditemukan")
+		return comment.Comment{}, errors.New("data tidak valid")
+	}
+
+	err := s.v.Struct(data)
+	if err != nil {
+		log.Println("error validasi aktivitas", err.Error())
+		return comment.Comment{}, err
+	}
+
+	result, err := s.m.UpdateComment(id, commentID, data)
+	if err != nil {
+		return comment.Comment{}, errors.New(helper.CannotUpdate)
+	}
+
+	return result, nil
+}
+
+func (s *service) DeleteComment(userid *jwt.Token, commentID uint) error {
+	id := middlewares.DecodeToken(userid)
+	if id == 0 { // Periksa apakah id adalah nol atau tidak
 		log.Println("error decode token:", "token tidak ditemukan")
 		return errors.New("data tidak valid")
 	}
 
-	err := s.m.AddComment(decodeUserID, content)
+	err := s.m.DeleteComment(id, commentID) // Memanggil DeleteBook dengan pemilik dan bookID
 	if err != nil {
-		return errors.New(helper.ServerGeneralError)
+		return errors.New(helper.CannotDelete)
 	}
 
 	return nil
 }
 
-// Fungsi untuk menghapus komentar dari database
-func (s *service) DeleteComment(token *jwt.Token, postID uint, commentID string) error {
-	decodeUserID := middlewares.DecodeToken(token)
-	if decodeUserID == "" {
+func (s *service) GetCommentByOwner(userid *jwt.Token) ([]comment.Comment, error) {
+	id := middlewares.DecodeToken(userid)
+	if id == 0 {
 		log.Println("error decode token:", "token tidak ditemukan")
-		return errors.New("data tidak valid")
+		return nil, errors.New("data tidak valid")
 	}
 
-	err := s.m.DeleteComment(decodeUserID, postID, commentID) // Hapus postID dari sini karena tidak diperlukan
+	books, err := s.m.GetCommentByOwner(id)
 	if err != nil {
-		return err
+		return nil, errors.New(helper.ErrorGeneralServer)
 	}
 
-	return nil
+	return books, nil
 }

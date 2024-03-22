@@ -1,8 +1,11 @@
 package data
 
 import (
+	"21-api/features/comment"
+	"21-api/features/post"
 	"21-api/features/user"
 	"errors"
+	_ "image/png"
 
 	"gorm.io/gorm"
 )
@@ -17,72 +20,97 @@ func New(db *gorm.DB) user.UserModel {
 	}
 }
 
-func (m *model) InsertUser(newData user.User) error {
+func (m *model) AddUser(newData user.User) error {
 	err := m.connection.Create(&newData).Error
-
 	if err != nil {
 		return errors.New("terjadi masalah pada database")
 	}
-
 	return nil
 }
 
-func (m *model) cekUser(hp string) bool {
-	var data User
-	if err := m.connection.Where("hp = ?", hp).First(&data).Error; err != nil {
-		return false
-	}
-	return true
-}
-
-// Berguna untuk update user
-func (m *model) UpdateUser(hp string, newData user.User) error {
-	// Mencari pengguna yang ingin diperbarui berdasarkan nomor HP
-	var existingUser user.User
-	if err := m.connection.Where("hp = ?", hp).First(&existingUser).Error; err != nil {
-		return err
-	}
-
-	// Memperbarui informasi pengguna yang ditemukan dengan data baru
-	existingUser.Name = newData.Name
-	existingUser.Email = newData.Email
-	existingUser.Password = newData.Password
-
-	// Menyimpan perubahan ke dalam database dengan menambahkan kondisi WHERE
-	if err := m.connection.Where("hp = ?", hp).Save(&existingUser).Error; err != nil {
-		return err
-	}
-
-	return nil
-}
-
-// Get User By Hp
-func (m *model) GetUserByHP(hp string) (user.User, error) {
-	var result user.User
-	if err := m.connection.Model(&user.User{}).Where("hp = ?", hp).First(&result).Error; err != nil {
-		return user.User{}, err
-	}
-	return result, nil
-}
-
-// Login
 func (m *model) Login(email string) (user.User, error) {
 	var result user.User
-	if err := m.connection.Model(&User{}).Where("email = ? ", email).First(&result).Error; err != nil {
+	if err := m.connection.Where("email = ? ", email).First(&result).Error; err != nil {
 		return user.User{}, err
 	}
 	return result, nil
 }
 
-// Delete User
-func (m *model) DeleteUser(userID string) error {
-	// Membuat objek user.User dengan ID yang akan dihapus
-	userToDelete := user.User{Hp: userID}
+func (m *model) GetUserByID(id uint) (user.User, error) {
+	var result user.User
+	if err := m.connection.Model(&User{}).Where("id = ?", id).First(&result).Error; err != nil {
+		return user.User{}, err
+	}
+	return result, nil
+}
 
-	// Menghapus pengguna dari database berdasarkan ID
-	if err := m.connection.Delete(&userToDelete).Error; err != nil {
-		return err
+func (m *model) Delete(id uint) error {
+	result := m.connection.Where("user_id = ?", id).Delete(&post.Post{}, &comment.Comment{})
+	if result.Error != nil {
+		return result.Error
+	}
+
+	result = m.connection.Delete(&User{}, id)
+	if result.Error != nil {
+		return result.Error
+	}
+
+	if result.RowsAffected == 0 {
+		return errors.New("no data affected")
 	}
 
 	return nil
+}
+
+func (m *model) Update(id uint, newData user.User) (user.User, error) {
+	var updatedUser user.User
+
+	tx := m.connection.Begin()
+
+	if newData.Fullname != "" {
+		if err := tx.Model(&user.User{}).Where("id = ?", id).Update("fullname", newData.Fullname).Error; err != nil {
+			tx.Rollback()
+			return user.User{}, err
+		}
+	}
+
+	if newData.Email != "" {
+		if err := tx.Model(&user.User{}).Where("id = ?", id).Update("email", newData.Email).Error; err != nil {
+			tx.Rollback()
+			return user.User{}, err
+		}
+	}
+
+	if newData.Password != "" {
+		if err := tx.Model(&user.User{}).Where("id = ?", id).Update("password", newData.Password).Error; err != nil {
+			tx.Rollback()
+			return user.User{}, err
+		}
+	}
+
+	if newData.Birthday != "" {
+		if err := tx.Model(&user.User{}).Where("id = ?", id).Update("birthday", newData.Birthday).Error; err != nil {
+			tx.Rollback()
+			return user.User{}, err
+		}
+	}
+
+	if newData.Avatar != "" {
+		if err := tx.Model(&user.User{}).Where("id = ?", id).Update("avatar", newData.Avatar).Error; err != nil {
+			tx.Rollback()
+			return user.User{}, err
+		}
+	}
+
+	// Commit transaction
+	if err := tx.Commit().Error; err != nil {
+		return user.User{}, err
+	}
+
+	// Ambil data user yang telah diperbarui
+	if err := m.connection.First(&updatedUser, id).Error; err != nil {
+		return user.User{}, err
+	}
+
+	return updatedUser, nil
 }
